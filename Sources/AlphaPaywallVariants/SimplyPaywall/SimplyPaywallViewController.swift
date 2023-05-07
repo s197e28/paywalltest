@@ -13,9 +13,13 @@ open class SimplyPaywallViewController: UIViewController {
     
     // MARK: Overridden properties
     
-    open var accentColor: UIColor = UIColor.blue
+    open var accentColor: UIColor {
+        UIColor.blue
+    }
     
-    open var featureOptions: [FeatureOption] = []
+    open var featureOptions: [FeatureOption] {
+        []
+    }
     
     // MARK: Public properties
     
