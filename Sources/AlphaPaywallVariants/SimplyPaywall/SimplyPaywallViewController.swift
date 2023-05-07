@@ -11,15 +11,21 @@ import SnapKit
 
 open class SimplyPaywallViewController: UIViewController {
     
+    // MARK: Overridden properties
+    
+    open var accentColor: UIColor = UIColor.blue
+    
+    open var featureOptions: [FeatureOption] = []
+    
+    // MARK: Public properties
+    
     public var titleText: String? {
         didSet {
             titleLabel.text = titleText
         }
     }
     
-    open var accentColor: UIColor = UIColor.blue
-    
-    open var featureOptions: [FeatureOption] = []
+    // MARK: Other properties
     
     private lazy var closeBarButton: UIBarButtonItem = {
         let image = UIImage(systemName: "xmark.circle.fill")?
@@ -59,11 +65,17 @@ open class SimplyPaywallViewController: UIViewController {
         return button
     }()
     
+    // MARK: Overridden methods
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
     }
+    
+    open func handleClose() { }
+    
+    // MARK: Other methods
     
     private func setupUI() {
         view.backgroundColor = .white
@@ -104,14 +116,7 @@ open class SimplyPaywallViewController: UIViewController {
     }
     
     @objc private func didTapClose() {
-        
-    }
-}
-
-extension SimplyPaywallViewController {
-    
-    open func handleClose() {
-        
+        handleClose()
     }
 }
 
