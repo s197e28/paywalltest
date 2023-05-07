@@ -17,9 +17,9 @@ open class SimplyPaywallViewController: UIViewController {
         }
     }
     
-    public var accentColor: UIColor = UIColor.blue
+    open var accentColor: UIColor = UIColor.blue
     
-    public var featureOptions: [FeatureOption] = []
+    open var featureOptions: [FeatureOption] = []
     
     private lazy var closeBarButton: UIBarButtonItem = {
         let image = UIImage(systemName: "xmark.circle.fill")?
@@ -59,7 +59,7 @@ open class SimplyPaywallViewController: UIViewController {
         return button
     }()
     
-    public override func viewDidLoad() {
+    open override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
@@ -110,7 +110,7 @@ open class SimplyPaywallViewController: UIViewController {
 
 extension SimplyPaywallViewController {
     
-    public func handleClose() {
+    open func handleClose() {
         
     }
 }
