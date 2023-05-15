@@ -13,6 +13,9 @@
 		0703053329F71212000DB9C8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0703053229F71212000DB9C8 /* Assets.xcassets */; };
 		0703053629F71212000DB9C8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0703053429F71212000DB9C8 /* LaunchScreen.storyboard */; };
 		0703054429F716F7000DB9C8 /* AlphaPaywallVariants in Frameworks */ = {isa = PBXBuildFile; productRef = 0703054329F716F7000DB9C8 /* AlphaPaywallVariants */; };
+		073C297A2A0E84A6002EDCEE /* ExampleSimplyPaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 073C29792A0E84A6002EDCEE /* ExampleSimplyPaywallViewController.swift */; };
+		073C297C2A0E84F5002EDCEE /* PaywallBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 073C297B2A0E84F5002EDCEE /* PaywallBuilder.swift */; };
+		073C297E2A0E8AAB002EDCEE /* Color.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 073C297D2A0E8AAB002EDCEE /* Color.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +27,9 @@
 		0703053529F71212000DB9C8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0703053729F71212000DB9C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0703054129F716E8000DB9C8 /* AlphaPaywallVariants */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = AlphaPaywallVariants; path = ..; sourceTree = "<group>"; };
+		073C29792A0E84A6002EDCEE /* ExampleSimplyPaywallViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleSimplyPaywallViewController.swift; sourceTree = "<group>"; };
+		073C297B2A0E84F5002EDCEE /* PaywallBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallBuilder.swift; sourceTree = "<group>"; };
+		073C297D2A0E8AAB002EDCEE /* Color.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Color.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +86,7 @@
 		0703053E29F712E0000DB9C8 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				073C29782A0E8494002EDCEE /* Paywalls */,
 				0703052D29F71210000DB9C8 /* HomeViewController.swift */,
 			);
 			path = ViewControllers;
@@ -89,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				0703053229F71212000DB9C8 /* Assets.xcassets */,
+				073C297D2A0E8AAB002EDCEE /* Color.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -106,6 +114,15 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		073C29782A0E8494002EDCEE /* Paywalls */ = {
+			isa = PBXGroup;
+			children = (
+				073C297B2A0E84F5002EDCEE /* PaywallBuilder.swift */,
+				073C29792A0E84A6002EDCEE /* ExampleSimplyPaywallViewController.swift */,
+			);
+			path = Paywalls;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -169,6 +186,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				073C297E2A0E8AAB002EDCEE /* Color.xcassets in Resources */,
 				0703053629F71212000DB9C8 /* LaunchScreen.storyboard in Resources */,
 				0703053329F71212000DB9C8 /* Assets.xcassets in Resources */,
 			);
@@ -183,6 +201,8 @@
 			files = (
 				0703052E29F71210000DB9C8 /* HomeViewController.swift in Sources */,
 				0703052A29F71210000DB9C8 /* AppDelegate.swift in Sources */,
+				073C297A2A0E84A6002EDCEE /* ExampleSimplyPaywallViewController.swift in Sources */,
+				073C297C2A0E84F5002EDCEE /* PaywallBuilder.swift in Sources */,
 				0703052C29F71210000DB9C8 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
