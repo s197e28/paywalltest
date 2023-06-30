@@ -1,8 +1,5 @@
 //
-//  SceneDelegate.swift
-//  Example
-//
-//  Created by Nikita Morozov on 4/24/23.
+// Copyright © 2023 Alpha Apps LLC. All rights reserved.
 //
 
 import UIKit

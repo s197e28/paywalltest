@@ -1,8 +1,5 @@
 //
-//  ExampleSimplyPaywallViewController.swift
-//  Example
-//
-//  Created by Nikita Morozov on 5/12/23.
+// Copyright © 2023 Alpha Apps LLC. All rights reserved.
 //
 
 import Foundation
@@ -30,11 +27,13 @@ final class ExampleSimplyPaywallViewController: SimplyPaywallViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        restoreActionText = "Restore"
+        
         titleText = "Unlimited Documents\nConvert as many files as you want"
         featuresTitle = "Unlock all premium features:"
         applyActionText = "Continue with Free One-Week Trial\nthen $169.99/year"
         
-        optionsTitle = "Free for 3 days. After trial ends 3.99/week."
+        productsTitle = "Free for 3 days. After trial ends 3.99/week."
         
         featureItems = [
             Self.FeatureItemViewModel(
@@ -58,8 +57,8 @@ final class ExampleSimplyPaywallViewController: SimplyPaywallViewController {
         ]
         
         productItems = [
-            Self.ProductItemViewModel(title: "Start 3-day free trial", description: "then $39.99/year. Cancel anytime"),
-            Self.ProductItemViewModel(title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime"),
+            Self.ProductItemViewModel(id: "1", title: "Start 3-day free trial", description: "then $39.99/year. Cancel anytime"),
+            Self.ProductItemViewModel(id: "2", title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime"),
 //            Self.ProductItemViewModel(title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime"),
 //            Self.ProductItemViewModel(title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime")
         ]
@@ -74,9 +73,43 @@ final class ExampleSimplyPaywallViewController: SimplyPaywallViewController {
             "Restore Purchase",
             "Privacy Policy"
         ]
+        
+        selectedProductItemIndex = 1
+    }
+    
+    override func didSelectProductItem(_ viewModel: SimplyPaywallViewController.ProductItemViewModel) {
+        print("Select product item with id = \(viewModel.id)")
+        
+        applyActionText = "Continue with Trial\nthen $200.99/year"
+        productsTitle = "After trial ends"
+        benefitItems = ["No benefits", "Can't cancel"]
+    }
+    
+    override func didTapFooterItem(withIndex index: Int) {
+        print("Tap footer item with index = \(index)")
     }
     
     override func didTapClose() {
         self.dismiss(animated: true)
+    }
+    
+    override func didTapContinue() {
+        print("Tap continue button")
+        
+        isContinueActionIndication = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.isContinueActionIndication = false
+        }
+    }
+    
+    override func didTapRestore() {
+        print("Tap restore button")
+        
+        isRestoreActionIndication = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.isRestoreActionIndication = false
+        }
     }
 }

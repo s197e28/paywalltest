@@ -82,16 +82,16 @@ open class SimplyPaywallViewController: UIViewController {
         }
     }
     
-    public var optionsTitle: String? {
+    public var productsTitle: String? {
         didSet {
-            optionsTitleLabel.text = optionsTitle
+            productsTitleLabel.text = productsTitle
         }
     }
     
     public var applyActionText: String? {
         didSet {
             guard let text = applyActionText, text.isEmpty == false else {
-                continueButton.setAttributedTitle(nil, for: .normal)
+                continueButton.attributedTitle = nil
                 return
             }
             
@@ -117,7 +117,13 @@ open class SimplyPaywallViewController: UIViewController {
                 )
             }
             
-            continueButton.setAttributedTitle(attributedString, for: .normal)
+            continueButton.attributedTitle = attributedString
+        }
+    }
+    
+    public var restoreActionText: String? {
+        didSet {
+            restoreBarButton.title = restoreActionText
         }
     }
     
@@ -135,15 +141,13 @@ open class SimplyPaywallViewController: UIViewController {
     public var productItems: [ProductItemViewModel] = [] {
         didSet {
             productsCollectionView.reloadData()
-            
-            productsCollectionView.selectItem(at: IndexPath(item: 0, section: 0), animated: false, scrollPosition: UICollectionView.ScrollPosition.centeredHorizontally)
         }
     }
     
     public var benefitItems: [String] = [] {
         didSet {
             for subView in benefitsStackView.arrangedSubviews {
-                benefitsStackView.removeArrangedSubview(subView)
+                subView.removeFromSuperview()
             }
             
             for view in benefitItems.map({ makeBenefitView(text: $0) }) {
@@ -155,11 +159,57 @@ open class SimplyPaywallViewController: UIViewController {
     public var footerItems: [String] = [] {
         didSet {
             for subView in bottomButtonsStackView.arrangedSubviews {
-                bottomButtonsStackView.removeArrangedSubview(subView)
+                subView.removeFromSuperview()
             }
             
-            for button in footerItems.map({ makeFooterButton(text: $0) }) {
+            for (index, item) in footerItems.enumerated() {
+                let button = makeFooterButton(text: item, index: index)
                 bottomButtonsStackView.addArrangedSubview(button)
+            }
+        }
+    }
+    
+    public var selectedProductItemIndex: Int? {
+        get {
+            guard let indexPath = productsCollectionView.indexPathsForSelectedItems?.first else {
+                return nil
+            }
+            
+            return indexPath.item
+        } set {
+            guard let value = newValue else {
+                if let indexPath = productsCollectionView.indexPathsForSelectedItems?.first {
+                    productsCollectionView.deselectItem(at: indexPath, animated: false)
+                }
+                return
+            }
+            
+            productsCollectionView.selectItem(at: IndexPath(item: value, section: 0), animated: false, scrollPosition: [])
+        }
+    }
+    
+    public var isRestoreActionIndication: Bool = false {
+        didSet {
+            closeBarButton.isEnabled = !isRestoreActionIndication
+            restoreBarButton.isEnabled = !isRestoreActionIndication
+            continueButton.isEnabled = !isRestoreActionIndication
+            bottomButtonsStackView.isUserInteractionEnabled = !isRestoreActionIndication
+            productsCollectionView.isUserInteractionEnabled = !isRestoreActionIndication
+        }
+    }
+    
+    public var isContinueActionIndication: Bool = false {
+        didSet {
+            closeBarButton.isEnabled = !isContinueActionIndication
+            restoreBarButton.isEnabled = !isContinueActionIndication
+            continueButton.isEnabled = !isContinueActionIndication
+            bottomButtonsStackView.isUserInteractionEnabled = !isContinueActionIndication
+            productsCollectionView.isUserInteractionEnabled = !isContinueActionIndication
+            
+            if isContinueActionIndication {
+                continueButton.startIndication()
+            } else {
+                continueButton.stopIndication()
             }
         }
     }
@@ -170,6 +220,13 @@ open class SimplyPaywallViewController: UIViewController {
     
     private lazy var closeBarButton: UIBarButtonItem = {
         return CloseBarButtonItem(color: secondaryLabelColor, target: self, action: #selector(didTapCloseButton))
+    }()
+    
+    private lazy var restoreBarButton: UIBarButtonItem = {
+        let buttonItem = IndicationBarButtonItem(title: nil, style: .plain, target: self, action: #selector(didTapRestoreButton))
+        buttonItem.tintColor = accentColor
+        buttonItem.indicationColor = accentColor
+        return buttonItem
     }()
     
     private lazy var scrollView: UIScrollView = {
@@ -203,7 +260,7 @@ open class SimplyPaywallViewController: UIViewController {
         return label
     }()
     
-    private lazy var optionsTitleLabel: UILabel = {
+    private lazy var productsTitleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.preferredFont(forTextStyle: .footnote, weight: .semibold)
         label.textColor = primaryLabelColor
@@ -213,10 +270,12 @@ open class SimplyPaywallViewController: UIViewController {
         return label
     }()
     
-    private lazy var continueButton: UIButton = {
-        let button = UIButton()
-        button.setTitleColor(UIColor.white, for: .normal)
+    private lazy var continueButton: IncidactionButton = {
+        let button = IncidactionButton()
+        button.indicationColor = primaryLabelColor
+        button.setTitleColor(primaryLabelColor, for: .normal)
         button.setBackgroundColor(color: accentColor, forState: .normal)
+        button.setBackgroundColor(color: accentColor.withAlphaComponent(0.7), forState: .disabled)
         button.setBackgroundColor(color: accentColor.withAlphaComponent(0.7), forState: .highlighted)
         button.titleLabel?.numberOfLines = 0
         button.titleLabel?.lineBreakMode = .byWordWrapping
@@ -307,7 +366,7 @@ open class SimplyPaywallViewController: UIViewController {
             ProductCollectionViewCell.self,
             forCellWithReuseIdentifier: ProductCollectionViewCell.identifier
         )
-        collectionView.allowsSelection = true
+//        collectionView.allowsSelection = true
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.isScrollEnabled = false
@@ -325,9 +384,15 @@ open class SimplyPaywallViewController: UIViewController {
         setupUI()
     }
     
+    open func didSelectProductItem(_ viewModel: ProductItemViewModel) { }
+    
+    open func didTapFooterItem(withIndex index: Int) { }
+    
     open func didTapClose() { }
     
     open func didTapContinue() { }
+    
+    open func didTapRestore() { }
     
     // MARK: Other methods
     
@@ -335,12 +400,14 @@ open class SimplyPaywallViewController: UIViewController {
         view.backgroundColor = contentBackgroundColor
         
         navigationItem.leftBarButtonItem = closeBarButton
+        navigationItem.rightBarButtonItem = restoreBarButton
         
         scrollableContentView.addSubview(titleLabel)
         scrollableContentView.addSubview(featuresTitleLabel)
         scrollableContentView.addSubview(featuresCollectionView)
         
-        bottomContentView.addSubview(optionsTitleLabel)
+        bottomContentView.addSubview(productsTitleLabel)
+        
         bottomContentView.addSubview(productsCollectionView)
         bottomContentView.addSubview(continueButton)
         bottomContentView.addSubview(benefitsStackView)
@@ -369,7 +436,8 @@ open class SimplyPaywallViewController: UIViewController {
             make.right.equalToSuperview()
         }
         
-        optionsTitleLabel.snp.makeConstraints { make in
+        productsTitleLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview()
             make.bottom.equalTo(productsCollectionView.snp.top).offset(-4)
             make.leading.equalToSuperview().offset(32)
             make.trailing.equalToSuperview().offset(-32)
@@ -384,7 +452,6 @@ open class SimplyPaywallViewController: UIViewController {
             make.height.equalTo(50)
             make.leading.equalToSuperview().offset(16)
             make.trailing.equalToSuperview().offset(-16)
-            make.top.equalToSuperview()
             make.bottom.equalTo(benefitsStackView.snp.top).offset(-15)
         }
         
@@ -428,13 +495,20 @@ open class SimplyPaywallViewController: UIViewController {
         didTapContinue()
     }
     
-    private func makeFooterButton(text: String) -> UIButton {
+    @objc private func didTapRestoreButton() {
+        didTapRestore()
+    }
+    
+    private func makeFooterButton(text: String, index: Int) -> UIButton {
         let button = UIButton()
         button.contentEdgeInsets = UIEdgeInsets(top: 0, left: CGFloat.leastNonzeroMagnitude, bottom: 0, right: 0)
         button.setTitleColor(secondaryLabelColor, for: .normal)
         button.setTitleColor(secondaryLabelColor.withAlphaComponent(0.7), for: .highlighted)
         button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
         button.setTitle(text, for: .normal)
+        button.addAction { [weak self] in
+            self?.didTapFooterItem(withIndex: index)
+        }
         return button
     }
     
@@ -481,12 +555,11 @@ open class SimplyPaywallViewController: UIViewController {
 extension SimplyPaywallViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        print(indexPath)
-//        guard let productItem = productItems[safe: indexPath.item] else {
-//            return
-//        }
-//
-//        presenter?.didTapProduct(itemWithId: productItem.id)
+        guard collectionView == productsCollectionView else {
+            return
+        }
+        
+        didSelectProductItem(productItems[indexPath.item])
     }
     
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -563,11 +636,14 @@ extension SimplyPaywallViewController {
     
     public struct ProductItemViewModel {
         
-        let title: String
+        public let id: String
         
-        let description: String
+        public let title: String
         
-        public init(title: String, description: String) {
+        public let description: String
+        
+        public init(id: String, title: String, description: String) {
+            self.id = id
             self.title = title
             self.description = description
         }

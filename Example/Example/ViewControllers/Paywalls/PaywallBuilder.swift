@@ -1,8 +1,5 @@
 //
-//  PaywallBuilder.swift
-//  Example
-//
-//  Created by Nikita Morozov on 5/12/23.
+// Copyright © 2023 Alpha Apps LLC. All rights reserved.
 //
 
 import Foundation
