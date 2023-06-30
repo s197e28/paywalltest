@@ -31,40 +31,67 @@ open class SimplyPaywallViewController: UIViewController {
     
     // MARK: Public properties
     
-    public var additionalBarActionText: String? {
+    public var titleText: String? {
         didSet {
-            guard let text = additionalBarActionText, text.isEmpty == false else {
-                navigationItem.leftBarButtonItem = nil
+            guard let text = titleText, text.isEmpty == false else {
+                titleLabel.attributedText = nil
                 return
             }
             
-            additionalBarButton.title = text
-            navigationItem.leftBarButtonItem = additionalBarButton
+            let texts = text.components(separatedBy: "\n")
+            let attributedString = NSMutableAttributedString(string: "")
+            
+            if let text = texts.first {
+                attributedString.append(NSAttributedString(string: text))
+                let range = NSRange(location: 0, length: text.count)
+                attributedString.addAttribute(
+                    .font,
+                    value: UIFont.preferredFont(forTextStyle: .title1, weight: .bold),
+                    range: range
+                )
+                attributedString.addAttribute(
+                    .foregroundColor,
+                    value: accentColor,
+                    range: NSRange(location: 0, length: text.count)
+                )
+            }
+            
+            if texts.count > 1 {
+                let text = texts[1..<texts.count].joined(separator: "\n")
+                attributedString.append(NSAttributedString(string: "\n\(text)"))
+                let range = NSRange(location: attributedString.string.count - text.count, length: text.count)
+                attributedString.addAttribute(
+                    .font,
+                    value: UIFont.preferredFont(forTextStyle: .title1, weight: .bold),
+                    range: range
+                )
+                attributedString.addAttribute(
+                    .foregroundColor,
+                    value: primaryLabelColor,
+                    range: range
+                )
+            }
+            
+            titleLabel.attributedText = attributedString
         }
     }
     
-    public var titleText: String? {
+    public var featuresTitle: String? {
         didSet {
-            titleLabel.text = titleText
+            featuresTitleLabel.text = featuresTitle
         }
     }
     
-    public var privacyPolicyText: String? {
+    public var optionsTitle: String? {
         didSet {
-            privacyPolicyButton.setTitle(privacyPolicyText, for: .normal)
-        }
-    }
-    
-    public var termsOfUseText: String? {
-        didSet {
-            termsOfUseButton.setTitle(termsOfUseText, for: .normal)
+            optionsTitleLabel.text = optionsTitle
         }
     }
     
     public var applyActionText: String? {
         didSet {
             guard let text = applyActionText, text.isEmpty == false else {
-                applyButton.setAttributedTitle(nil, for: .normal)
+                continueButton.setAttributedTitle(nil, for: .normal)
                 return
             }
             
@@ -90,46 +117,65 @@ open class SimplyPaywallViewController: UIViewController {
                 )
             }
             
-            applyButton.setAttributedTitle(attributedString, for: .normal)
+            continueButton.setAttributedTitle(attributedString, for: .normal)
         }
     }
     
-    public var featureOptions: [FeatureOption] = [] {
+    public var featureItems: [FeatureItemViewModel] = [] {
         didSet {
-            featureCollectionView.reloadData()
+            let widths = featureItems.map({
+                FeatureCollectionViewCell.calculateWidth(text: $0.title)
+            })
+            
+            featureCollectionViewOffset = widths.max() ?? 0
+            featuresCollectionView.reloadData()
+        }
+    }
+    
+    public var productItems: [ProductItemViewModel] = [] {
+        didSet {
+            productsCollectionView.reloadData()
+            
+            productsCollectionView.selectItem(at: IndexPath(item: 0, section: 0), animated: false, scrollPosition: UICollectionView.ScrollPosition.centeredHorizontally)
+        }
+    }
+    
+    public var benefitItems: [String] = [] {
+        didSet {
+            for subView in benefitsStackView.arrangedSubviews {
+                benefitsStackView.removeArrangedSubview(subView)
+            }
+            
+            for view in benefitItems.map({ makeBenefitView(text: $0) }) {
+                benefitsStackView.addArrangedSubview(view)
+            }
+        }
+    }
+    
+    public var footerItems: [String] = [] {
+        didSet {
+            for subView in bottomButtonsStackView.arrangedSubviews {
+                bottomButtonsStackView.removeArrangedSubview(subView)
+            }
+            
+            for button in footerItems.map({ makeFooterButton(text: $0) }) {
+                bottomButtonsStackView.addArrangedSubview(button)
+            }
         }
     }
     
     // MARK: Other properties
     
-    private lazy var closeBarButton: UIBarButtonItem = {
-        let image = UIImage(systemName: "xmark.circle.fill")?
-            .withConfiguration(UIImage.SymbolConfiguration(font: UIFont.systemFont(ofSize: 28, weight: .semibold)))
-            .withTintColor(UIColor(red: 60 / 255, green: 60 / 255, blue: 57 / 255, alpha: 0.18))
-            .withRenderingMode(.alwaysOriginal)
-        
-        return UIBarButtonItem(
-            image: image,
-            style: .plain,
-            target: self,
-            action: #selector(didTapCloseButton)
-        )
-    }()
+    private var featureCollectionViewOffset: CGFloat = 0
     
-    private lazy var additionalBarButton: UIBarButtonItem = {
-        let buttonItem = UIBarButtonItem(
-            title: nil,
-            style: .plain,
-            target: self,
-            action: #selector(didTapAdditionalBarButton)
-        )
-        buttonItem.tintColor = accentColor
-        return buttonItem
+    private lazy var closeBarButton: UIBarButtonItem = {
+        return CloseBarButtonItem(color: secondaryLabelColor, target: self, action: #selector(didTapCloseButton))
     }()
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
-        scrollView.alwaysBounceVertical = true
+//        scrollView.alwaysBounceVertical = true
+        scrollView.delaysContentTouches = false
         return scrollView
     }()
     
@@ -140,14 +186,34 @@ open class SimplyPaywallViewController: UIViewController {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.preferredFont(forTextStyle: .title1, weight: .bold)
-        label.textColor = .black
+        label.textColor = primaryLabelColor
         label.textAlignment = .center
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
         return label
     }()
     
-    private lazy var applyButton: UIButton = {
+    private lazy var featuresTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.preferredFont(forTextStyle: .headline, weight: .semibold)
+        label.textColor = accentColor
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        return label
+    }()
+    
+    private lazy var optionsTitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.preferredFont(forTextStyle: .footnote, weight: .semibold)
+        label.textColor = primaryLabelColor
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        return label
+    }()
+    
+    private lazy var continueButton: UIButton = {
         let button = UIButton()
         button.setTitleColor(UIColor.white, for: .normal)
         button.setBackgroundColor(color: accentColor, forState: .normal)
@@ -157,69 +223,97 @@ open class SimplyPaywallViewController: UIViewController {
         button.titleLabel?.textAlignment = .center
         button.layer.cornerRadius = 12
         button.layer.masksToBounds = true
-        button.addTarget(self, action: #selector(didTapApplyButton), for: .touchUpInside)
+        button.addTarget(self, action: #selector(didTapContinueButton), for: .touchUpInside)
         return button
     }()
     
-    private lazy var privacyPolicyButton: UIButton = {
-        let button = UIButton()
-        button.contentEdgeInsets = UIEdgeInsets(top: 0, left: CGFloat.leastNonzeroMagnitude, bottom: 0, right: 0)
-        button.setTitleColor(secondaryLabelColor, for: .normal)
-        button.setTitleColor(secondaryLabelColor.withAlphaComponent(0.7), for: .highlighted)
-        button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
-        return button
-    }()
-    
-    private lazy var termsOfUseButton: UIButton = {
-        let button = UIButton()
-        button.contentEdgeInsets = UIEdgeInsets(top: 0, left: CGFloat.leastNonzeroMagnitude, bottom: 0, right: 0)
-        button.setTitleColor(secondaryLabelColor, for: .normal)
-        button.setTitleColor(secondaryLabelColor.withAlphaComponent(0.7), for: .highlighted)
-        button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
-        return button
-    }()
-    
-    private lazy var bottonButtonsContainer: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [privacyPolicyButton, termsOfUseButton])
+    private lazy var benefitsStackView: UIStackView = {
+        let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 20
         return stackView
     }()
     
-    private lazy var featureCollectionViewLayout: UICollectionViewLayout = {
+    private lazy var bottomButtonsStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fillProportionally
+        return stackView
+    }()
+    
+    private lazy var featuresCollectionViewLayout: UICollectionViewLayout = {
         let item = NSCollectionLayoutItem(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
-                heightDimension: .estimated(62)
+                heightDimension: .estimated(44)
             )
         )
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
-                heightDimension: .estimated(62)
+                heightDimension: .estimated(44)
             ),
             subitem: item,
             count: 1
         )
         
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 16
+        section.interGroupSpacing = 0
         let layout = UICollectionViewCompositionalLayout(section: section)
         return layout
     }()
     
-    private lazy var featureCollectionView: UICollectionView = {
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: featureCollectionViewLayout)
+    private lazy var featuresCollectionView: UICollectionView = {
+        let collectionView = ContentSizedCollectionView(frame: .zero, collectionViewLayout: featuresCollectionViewLayout)
         collectionView.register(
             FeatureCollectionViewCell.self,
             forCellWithReuseIdentifier: FeatureCollectionViewCell.identifier
         )
-        collectionView.allowsSelection = true
+        collectionView.allowsSelection = false
         collectionView.dataSource = self
         collectionView.isScrollEnabled = false
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.showsVerticalScrollIndicator = false
-//        collectionView.backgroundColor = .red
+        collectionView.backgroundColor = .clear
+        return collectionView
+    }()
+    
+    private lazy var productsCollectionViewLayout: UICollectionViewLayout = {
+        let item = NSCollectionLayoutItem(
+            layoutSize: NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .estimated(55)
+            )
+        )
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .estimated(55)
+            ),
+            subitem: item,
+            count: 1
+        )
+        
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 12
+        section.contentInsets = .init(top: 8, leading: 16, bottom: 8, trailing: 16)
+        let layout = UICollectionViewCompositionalLayout(section: section)
+        return layout
+    }()
+    
+    private lazy var productsCollectionView: UICollectionView = {
+        let collectionView = ContentSizedCollectionView(frame: .zero, collectionViewLayout: productsCollectionViewLayout)
+        collectionView.register(
+            ProductCollectionViewCell.self,
+            forCellWithReuseIdentifier: ProductCollectionViewCell.identifier
+        )
+        collectionView.allowsSelection = true
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.isScrollEnabled = false
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.backgroundColor = .clear
         return collectionView
     }()
     
@@ -233,22 +327,24 @@ open class SimplyPaywallViewController: UIViewController {
     
     open func didTapClose() { }
     
-    open func didTapAdditionalAction() { }
-    
-    open func didTapApply() { }
+    open func didTapContinue() { }
     
     // MARK: Other methods
     
     private func setupUI() {
         view.backgroundColor = contentBackgroundColor
         
-        navigationItem.rightBarButtonItem = closeBarButton
+        navigationItem.leftBarButtonItem = closeBarButton
         
         scrollableContentView.addSubview(titleLabel)
-        scrollableContentView.addSubview(featureCollectionView)
+        scrollableContentView.addSubview(featuresTitleLabel)
+        scrollableContentView.addSubview(featuresCollectionView)
         
-        bottomContentView.addSubview(applyButton)
-        bottomContentView.addSubview(bottonButtonsContainer)
+        bottomContentView.addSubview(optionsTitleLabel)
+        bottomContentView.addSubview(productsCollectionView)
+        bottomContentView.addSubview(continueButton)
+        bottomContentView.addSubview(benefitsStackView)
+        bottomContentView.addSubview(bottomButtonsStackView)
         
         scrollView.addSubview(scrollableContentView)
         scrollView.addSubview(bottomContentView)
@@ -261,26 +357,48 @@ open class SimplyPaywallViewController: UIViewController {
             make.trailing.equalToSuperview().offset(-32)
         }
         
-        featureCollectionView.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom)
-            make.height.equalTo(350)
+        featuresTitleLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(24)
+            make.leading.equalToSuperview().offset(32)
+            make.trailing.equalToSuperview().offset(-32)
+        }
+        
+        featuresCollectionView.snp.makeConstraints { make in
+            make.top.equalTo(featuresTitleLabel.snp.bottom).offset(24)
             make.left.equalToSuperview()
             make.right.equalToSuperview()
         }
         
-        applyButton.snp.makeConstraints { make in
+        optionsTitleLabel.snp.makeConstraints { make in
+            make.bottom.equalTo(productsCollectionView.snp.top).offset(-4)
+            make.leading.equalToSuperview().offset(32)
+            make.trailing.equalToSuperview().offset(-32)
+        }
+        
+        productsCollectionView.snp.makeConstraints { make in
+            make.bottom.equalTo(continueButton.snp.top).offset(-10)
+            make.leading.trailing.equalToSuperview()
+        }
+        
+        continueButton.snp.makeConstraints { make in
             make.height.equalTo(50)
             make.leading.equalToSuperview().offset(16)
             make.trailing.equalToSuperview().offset(-16)
             make.top.equalToSuperview()
-            make.bottom.equalTo(privacyPolicyButton.snp.top).offset(-24)
+            make.bottom.equalTo(benefitsStackView.snp.top).offset(-15)
         }
         
-        bottonButtonsContainer.snp.makeConstraints { make in
+        benefitsStackView.snp.makeConstraints { make in
+            make.bottom.equalTo(bottomButtonsStackView.snp.top).offset(-19)
+            make.centerX.equalToSuperview()
+            make.left.greaterThanOrEqualToSuperview()
+            make.right.lessThanOrEqualToSuperview()
+        }
+        
+        bottomButtonsStackView.snp.makeConstraints { make in
             make.bottom.equalTo(bottomContentView.safeAreaLayoutGuide.snp.bottom).offset(-8)
-            make.centerX.equalTo(scrollView.snp.centerX)
-            make.left.greaterThanOrEqualTo(scrollView.snp.left).offset(16)
-            make.right.lessThanOrEqualTo(scrollView.snp.right).offset(-16)
+            make.left.equalToSuperview()
+            make.right.equalToSuperview()
         }
         
         scrollableContentView.snp.makeConstraints { make in
@@ -306,28 +424,77 @@ open class SimplyPaywallViewController: UIViewController {
         didTapClose()
     }
     
-    @objc private func didTapAdditionalBarButton() {
-        didTapAdditionalAction()
+    @objc private func didTapContinueButton() {
+        didTapContinue()
     }
     
-    @objc private func didTapApplyButton() {
-        didTapApply()
+    private func makeFooterButton(text: String) -> UIButton {
+        let button = UIButton()
+        button.contentEdgeInsets = UIEdgeInsets(top: 0, left: CGFloat.leastNonzeroMagnitude, bottom: 0, right: 0)
+        button.setTitleColor(secondaryLabelColor, for: .normal)
+        button.setTitleColor(secondaryLabelColor.withAlphaComponent(0.7), for: .highlighted)
+        button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+        button.setTitle(text, for: .normal)
+        return button
+    }
+    
+    private func makeBenefitView(text: String) -> UIView {
+        let view = UIView()
+        
+        let imageView = UIImageView(
+            image: UIImage(systemName: "checkmark")?
+                .applyingSymbolConfiguration(UIImage.SymbolConfiguration(font: UIFont.systemFont(ofSize: 13)))?
+                .withTintColor(accentColor, renderingMode: .alwaysOriginal)
+        )
+        
+        let label = UILabel()
+        label.font = UIFont.preferredFont(forTextStyle: .footnote, weight: .regular)
+        label.textColor = primaryLabelColor
+        label.text = text
+        
+        view.addSubview(imageView)
+        view.addSubview(label)
+        
+        imageView.snp.makeConstraints { make in
+            make.left.equalToSuperview()
+            make.centerY.equalToSuperview()
+            make.top.greaterThanOrEqualToSuperview()
+            make.bottom.lessThanOrEqualToSuperview()
+        }
+        
+        label.snp.makeConstraints { make in
+            make.left.equalTo(imageView.snp.right).offset(4)
+            make.top.bottom.right.equalToSuperview()
+        }
+        
+        return view
     }
     
     override open func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         
-        applyButton.setBackgroundColor(color: accentColor, forState: .normal)
-        applyButton.setBackgroundColor(color: accentColor.withAlphaComponent(0.7), forState: .highlighted)
+        continueButton.setBackgroundColor(color: accentColor, forState: .normal)
+        continueButton.setBackgroundColor(color: accentColor.withAlphaComponent(0.7), forState: .highlighted)
     }
 }
 
 extension SimplyPaywallViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        print(indexPath)
+//        guard let productItem = productItems[safe: indexPath.item] else {
+//            return
+//        }
+//
+//        presenter?.didTapProduct(itemWithId: productItem.id)
+    }
+    
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
         switch collectionView {
-        case featureCollectionView:
-            return featureOptions.count > 0 ? 1 : 0
+        case featuresCollectionView:
+            return featureItems.count > 0 ? 1 : 0
+        case productsCollectionView:
+            return productItems.count > 0 ? 1 : 0
         default:
             fatalError()
         }
@@ -335,8 +502,10 @@ extension SimplyPaywallViewController: UICollectionViewDelegate, UICollectionVie
     
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         switch collectionView {
-        case featureCollectionView:
-            return featureOptions.count
+        case featuresCollectionView:
+            return featureItems.count
+        case productsCollectionView:
+            return productItems.count
         default:
             fatalError()
         }
@@ -344,10 +513,32 @@ extension SimplyPaywallViewController: UICollectionViewDelegate, UICollectionVie
     
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         switch collectionView {
-        case featureCollectionView:
-            guard let cell = featureCollectionView.dequeueReusableCell(withReuseIdentifier: FeatureCollectionViewCell.identifier, for: indexPath) as? FeatureCollectionViewCell else {
+        case featuresCollectionView:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FeatureCollectionViewCell.identifier, for: indexPath) as? FeatureCollectionViewCell else {
                 fatalError()
             }
+            let itemViewModel = featureItems[indexPath.item]
+            
+            cell.primaryLabelColor = primaryLabelColor
+            cell.horizontalOffset = (collectionView.bounds.width - featureCollectionViewOffset) / 2
+            
+            cell.titleText = itemViewModel.title
+            cell.iconImage = itemViewModel.image
+            
+            return cell
+        case productsCollectionView:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ProductCollectionViewCell.identifier, for: indexPath) as? ProductCollectionViewCell else {
+                fatalError()
+            }
+            let itemViewModel = productItems[indexPath.item]
+            
+            cell.contentBackgroundColor = contentBackgroundColor
+            cell.accentColor = accentColor
+            cell.primaryLabelColor = primaryLabelColor
+            cell.secondaryLabelColor = secondaryLabelColor
+            
+            cell.titleText = itemViewModel.title
+            cell.descriptionText = itemViewModel.description
             
             return cell
         default:
@@ -358,15 +549,27 @@ extension SimplyPaywallViewController: UICollectionViewDelegate, UICollectionVie
 
 extension SimplyPaywallViewController {
     
-    public struct FeatureOption {
+    public struct FeatureItemViewModel {
         
-        let name: String
+        let title: String
         
         let image: UIImage
         
-        public init(name: String, image: UIImage) {
-            self.name = name
+        public init(title: String, image: UIImage) {
+            self.title = title
             self.image = image
+        }
+    }
+    
+    public struct ProductItemViewModel {
+        
+        let title: String
+        
+        let description: String
+        
+        public init(title: String, description: String) {
+            self.title = title
+            self.description = description
         }
     }
 }

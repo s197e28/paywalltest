@@ -12,35 +12,67 @@ import AlphaPaywallVariants
 final class ExampleSimplyPaywallViewController: SimplyPaywallViewController {
     
     override var contentBackgroundColor: UIColor {
-        UIColor(named: "Background/Primary")!
+        UIColor(named: "Simply/ContentBackground")!
     }
     
     override var accentColor: UIColor {
-        UIColor(named: "Default/Primary")!
+        UIColor(named: "Simply/Accent")!
     }
     
     override var primaryLabelColor: UIColor {
-        UIColor(named: "Label/Primary")!
+        UIColor(named: "Simply/PrimaryLabel")!
     }
     
     override var secondaryLabelColor: UIColor {
-        UIColor(named: "Label/Secondary")!
+        UIColor(named: "Simply/SecondaryLabel")!
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        titleText = "Get the complete and easy Invoice experience with the PRO subscription"
-        additionalBarActionText = "Restore"
-        privacyPolicyText = "Privacy Policy"
-        termsOfUseText = "Terms of Use"
+        titleText = "Unlimited Documents\nConvert as many files as you want"
+        featuresTitle = "Unlock all premium features:"
         applyActionText = "Continue with Free One-Week Trial\nthen $169.99/year"
         
-        featureOptions = [
-            Self.FeatureOption(name: "Manage clients", image: UIImage(systemName: "person.2")!),
-            Self.FeatureOption(name: "Create invoices and estimates", image: UIImage(systemName: "doc.plaintext")!),
-            Self.FeatureOption(name: "Send unlimited documents", image: UIImage(systemName: "square.and.arrow.up")!),
-            Self.FeatureOption(name: "Work without ads or limits", image: UIImage(systemName: "checkmark.seal")!)
+        optionsTitle = "Free for 3 days. After trial ends 3.99/week."
+        
+        featureItems = [
+            Self.FeatureItemViewModel(
+                title: "Unlimited documents",
+                image: UIImage(systemName: "person.2")!
+                    .applyingSymbolConfiguration(UIImage.SymbolConfiguration(font: .systemFont(ofSize: 23)))!
+                    .withTintColor(accentColor, renderingMode: .alwaysOriginal)
+            ),
+            Self.FeatureItemViewModel(
+                title: "No ads",
+                image: UIImage(systemName: "doc.plaintext")!
+                    .applyingSymbolConfiguration(UIImage.SymbolConfiguration(font: .systemFont(ofSize: 23)))!
+                    .withTintColor(accentColor, renderingMode: .alwaysOriginal)
+            ),
+            Self.FeatureItemViewModel(
+                title: "Faster conversion",
+                image: UIImage(systemName: "square.and.arrow.up")!
+                    .applyingSymbolConfiguration(UIImage.SymbolConfiguration(font: .systemFont(ofSize: 23)))!
+                    .withTintColor(accentColor, renderingMode: .alwaysOriginal)
+            ),
+        ]
+        
+        productItems = [
+            Self.ProductItemViewModel(title: "Start 3-day free trial", description: "then $39.99/year. Cancel anytime"),
+            Self.ProductItemViewModel(title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime"),
+//            Self.ProductItemViewModel(title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime"),
+//            Self.ProductItemViewModel(title: "Get Monthly Subscription", description: "$9.99/month. Cancel anytime")
+        ]
+        
+        benefitItems = [
+            "No charge until Oct 20",
+            "Cancel anytime"
+        ]
+        
+        footerItems = [
+            "Terms of Service",
+            "Restore Purchase",
+            "Privacy Policy"
         ]
     }
     
