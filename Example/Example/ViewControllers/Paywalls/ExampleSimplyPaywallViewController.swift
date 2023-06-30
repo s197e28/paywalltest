@@ -75,6 +75,12 @@ final class ExampleSimplyPaywallViewController: SimplyPaywallViewController {
         ]
         
         selectedProductItemIndex = 1
+        
+        presentLoadingState()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.presentContentState()
+        }
     }
     
     override func didSelectProductItem(_ viewModel: SimplyPaywallViewController.ProductItemViewModel) {

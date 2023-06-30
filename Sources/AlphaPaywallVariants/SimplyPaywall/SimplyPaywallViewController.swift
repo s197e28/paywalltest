@@ -366,7 +366,6 @@ open class SimplyPaywallViewController: UIViewController {
             ProductCollectionViewCell.self,
             forCellWithReuseIdentifier: ProductCollectionViewCell.identifier
         )
-//        collectionView.allowsSelection = true
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.isScrollEnabled = false
@@ -374,6 +373,12 @@ open class SimplyPaywallViewController: UIViewController {
         collectionView.showsVerticalScrollIndicator = false
         collectionView.backgroundColor = .clear
         return collectionView
+    }()
+    
+    private lazy var activityIndicatorView: UIActivityIndicatorView = {
+        let view = UIActivityIndicatorView(style: .medium)
+        view.color = primaryLabelColor
+        return view
     }()
     
     // MARK: Overridden methods
@@ -393,6 +398,33 @@ open class SimplyPaywallViewController: UIViewController {
     open func didTapContinue() { }
     
     open func didTapRestore() { }
+    
+    public func presentLoadingState() {
+        guard activityIndicatorView.superview == nil else {
+            return
+        }
+        
+        view.addSubview(activityIndicatorView)
+        
+        activityIndicatorView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+        activityIndicatorView.startAnimating()
+        
+        navigationItem.rightBarButtonItem = nil
+        scrollView.isHidden = true
+    }
+    
+    public func presentContentState() {
+        if activityIndicatorView.superview != nil {
+            activityIndicatorView.stopAnimating()
+            activityIndicatorView.removeFromSuperview()
+            activityIndicatorView.snp.removeConstraints()
+        }
+        
+        navigationItem.rightBarButtonItem = restoreBarButton
+        scrollView.isHidden = false
+    }
     
     // MARK: Other methods
     
